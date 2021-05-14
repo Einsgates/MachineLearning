@@ -22,7 +22,6 @@ theta = theta - alpha * (1 / m) * (X' * (X * theta - y));
 
 
 
-
     % ============================================================
 
     % Save the cost J in every iteration    
