@@ -16,11 +16,11 @@ function [J grad] = nnCostFunction(nn_params, ...
 
 % Reshape nn_params back into the parameters Theta1 and Theta2, the weight matrices
 % for our 2 layer neural network
-Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
-                 hidden_layer_size, (input_layer_size + 1));
+Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)),...
+hidden_layer_size, (input_layer_size + 1));
 
-Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
-                 num_labels, (hidden_layer_size + 1));
+Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end),...
+num_labels, (hidden_layer_size + 1));
 
 % Setup some useful variables
 m = size(X, 1);
@@ -62,30 +62,47 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+Theta1_x = Theta1(:,(2:end));   %去掉theta1(0)
+Theta2_x = Theta2(:,(2:end));   %去掉theta2(0)
+regterm = [Theta1_x(:);Theta2_x(:)]'*[Theta1_x(:);Theta2_x(:)]; %theta的平方
+
+class_y = zeros(m,num_labels);  %映射为0,1，主要后面求J中使用
+for i = 1:num_labels
+    class_y(:,i) = y==i;
+end
+
+%  正向传播
+a1 = [ones(m,1),X];
+z2 = a1*Theta1';
+a2 = sigmoid(z2);
+a2 = [ones(m,1),a2];
+z3 = a2*Theta2';
+h = sigmoid(z3);
+
+%  求代价函数
+J = -((class_y(:)'*(log(h(:)))) + ((1-class_y(:))'*(log(1-h(:))))-(lambda*regterm/2))/m;
+
+%   反向传播求梯度
+for i = 1:m
+    delta3(i,:) = h(i,:)-class_y(i,:);  %误差率
+    Theta2_grad = Theta2_grad+delta3(i,:)'*a2(i,:); %前一层，
+    delta2(i,:) = (delta3(i,:)*Theta2_x).*sigmoidGradient(z2(i,:));
+    Theta1_grad = Theta1_grad+delta2(i,:)'*a1(i,:);
+end
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+Theta1(:,1) = 0;
+Theta2(:,1) = 0;
 
 % -------------------------------------------------------------
 
 % =========================================================================
 
 % Unroll gradients
-grad = [Theta1_grad(:) ; Theta2_grad(:)];
+grad = ([Theta1_grad(:);Theta2_grad(:)]+lambda*[Theta1(:);Theta2(:)])/m;
 
 
 end
